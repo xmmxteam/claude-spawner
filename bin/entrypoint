@@ -16,7 +16,9 @@ cp /opt/launcher/config/container-CLAUDE.md "$HOME/.claude/CLAUDE.md"
 # Hindsight memory: config comes from secrets/, the plugin (hooks, MCP server, skill) is installed once.
 if [[ -f /secrets/hindsight-coding-agent.json ]]; then
   mkdir -p "$HOME/.hindsight"
-  cp /secrets/hindsight-coding-agent.json "$HOME/.hindsight/coding-agent.json"
+  # install, not cp: the secret is mounted read-only (0444), and cp would copy that mode and then
+  # fail to overwrite the file on the next boot. The file holds an API token, so keep it private.
+  install -m 0600 /secrets/hindsight-coding-agent.json "$HOME/.hindsight/coding-agent.json"
   if ! grep -q 'hindsight' "$HOME/.claude/settings.json"; then
     log "installing Hindsight coding-agent plugin"
     npx -y @vectorize-io/hindsight-coding-agents install claude-code --server self-hosted \
