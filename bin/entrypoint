@@ -59,6 +59,10 @@ while true; do
     tm new-session -d -s launcher -c "$WORKSPACE" start-launcher
     resume-session --all-running || true
   fi
+  if logged_in && ! is_live workspace; then
+    log "starting workspace device"
+    tm new-session -d -s workspace -c "$WORKSPACE" start-workspace
+  fi
   sleep 30 &
   wait $!
 done

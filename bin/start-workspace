@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Runs inside the "workspace" tmux session: a Remote Control server that registers this machine as a
+# device in the Claude app. New sessions started from the device begin in the workspace root.
+source /opt/launcher/lib/lib.sh
+
+cd "$WORKSPACE" || exit 1
+exec claude remote-control --permission-mode bypassPermissions --no-create-session-in-dir
