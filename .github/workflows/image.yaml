@@ -15,9 +15,9 @@ env:
 
 jobs:
   build:
-    # Self-hosted runner scale set in the home cluster (has a Docker-in-Docker sidecar).
-    # Change to ubuntu-latest to use GitHub's hosted runners instead.
-    runs-on: xmmx-k8s
+    # GitHub-hosted: the repo is public, and the org's self-hosted runner group does not serve
+    # public repos (a privileged runner should not run workflows from a public repo anyway).
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
