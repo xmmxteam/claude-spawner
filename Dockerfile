@@ -87,6 +87,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     DISABLE_AUTOUPDATER=1 \
     DOTNET_ROOT=/usr/share/dotnet \
     DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+    TZ=Australia/Brisbane \
+    LANG=en_AU.UTF-8 \
     RUSTUP_HOME=/opt/rust/rustup \
     CARGO_HOME=/opt/rust/cargo \
     PATH=/opt/launcher/bin:/usr/share/dotnet:/usr/local/go/bin:/opt/rust/cargo/bin:$PATH
@@ -107,9 +109,10 @@ RUN set -eux; \
     echo "deb [arch=$arch signed-by=/etc/apt/keyrings/microsoft.asc] https://packages.microsoft.com/repos/azure-cli/ $codename main" > /etc/apt/sources.list.d/azure-cli.list; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
-      gcc libc6-dev make git openssh-client openssl bind9-dnsutils tmux sudo jq ripgrep unzip less procps python3 python3-pip ttyd \
+      tzdata locales gcc libc6-dev make git openssh-client openssl bind9-dnsutils tmux sudo jq ripgrep unzip less procps python3 python3-pip ttyd \
       gh docker-ce-cli docker-buildx-plugin docker-compose-plugin azure-cli \
       $(apt-cache search --names-only '^libicu[0-9]+$' | cut -d' ' -f1); \
+    locale-gen en_AU.UTF-8; \
     rm -rf /var/lib/apt/lists/*
 
 # Downloaded tools, least to most frequently updated.
