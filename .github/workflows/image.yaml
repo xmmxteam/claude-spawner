@@ -11,7 +11,7 @@ permissions:
   packages: write
 
 env:
-  IMAGE: ghcr.io/xmmxteam/claude-spawner-image
+  IMAGE: ghcr.io/xmmxteam/claude-spawner
 
 jobs:
   build:
