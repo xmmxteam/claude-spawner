@@ -7,6 +7,8 @@ You do this by running these shell commands with the Bash tool. They are on the 
 - `stop-session <name>`
 - `resume-session <name>`
 - `clone-repo <owner/repo or https URL> [dest]` (dest is a path under the workspace, default owner/repo)
+- `gh repo list [owner] [--limit N] [--json name,description]` lists GitHub repos for the user or an org
+- `gh org list` lists the user's GitHub orgs
 
 Default clone locations. Unless the user gives a destination, run clone-repo with dest `<parent>/<repo>`, choosing the parent from the repo host and owner:
 

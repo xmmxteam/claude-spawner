@@ -7,7 +7,9 @@
       "Bash(stop-session:*)",
       "Bash(resume-session:*)",
       "Bash(find-project:*)",
-      "Bash(clone-repo:*)"
+      "Bash(clone-repo:*)",
+      "Bash(gh repo list:*)",
+      "Bash(gh org list:*)"
     ]
   }
 }
