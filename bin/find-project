@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# find-project [words...]
+# Lists git repos under the workspace whose path contains every word (case-insensitive).
+# With no words, lists all repos.
+source /opt/launcher/lib/lib.sh
+
+while IFS= read -r gitpath; do
+  repo=${gitpath%/.git}
+  rel=${repo#"$WORKSPACE"/}
+  [[ $rel == *"/.claude/worktrees/"* ]] && continue
+  lower=${rel,,}
+  ok=1
+  for w in "$@"; do
+    [[ $lower == *"${w,,}"* ]] || { ok=0; break; }
+  done
+  (( ok )) && echo "$rel"
+done < <(find "$WORKSPACE" -maxdepth 5 -name .git -prune 2>/dev/null | sort)
+exit 0

@@ -1,0 +1,33 @@
+services:
+  claude:
+    build: .
+    init: true
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DOCKER_HOST: tcp://dind:2375
+      KUBECONFIG: /secrets/kubeconfig
+      TALOSCONFIG: /secrets/talosconfig
+    volumes:
+      - home:/home/claude
+      - workspace:/workspace
+      - ./secrets:/secrets:ro
+    ports:
+      - "127.0.0.1:7681:7681" # ttyd, for /login and debugging
+    depends_on:
+      - dind
+
+  dind:
+    image: docker:dind
+    privileged: true
+    restart: unless-stopped
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+    volumes:
+      - dind-data:/var/lib/docker
+      - workspace:/workspace
+
+volumes:
+  home:
+  workspace:
+  dind-data:

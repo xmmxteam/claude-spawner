@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Runs inside a tmux session. Starts or resumes Claude for a registered entry and
+# marks the entry finished when Claude exits on its own. A container shutdown
+# (HUP/TERM) leaves the entry as "running" so the next boot resumes it.
+source /opt/launcher/lib/lib.sh
+
+name=${1:?usage: session-wrapper <name>}
+reg_load "$name"
+
+shutting=0
+trap 'shutting=1' HUP TERM
+
+cd "$DIR"
+# Resume only when a transcript exists; a session that never got a message starts fresh.
+if [[ $STARTED_ONCE == 1 ]] && compgen -G "$HOME/.claude/projects/*/$SID.jsonl" >/dev/null; then
+  [[ -n $WORKTREE && -d $DIR/.claude/worktrees/$WORKTREE ]] && cd "$DIR/.claude/worktrees/$WORKTREE"
+  args=(--resume "$SID")
+else
+  args=(--session-id "$SID")
+  [[ -n $WORKTREE ]] && args+=(--worktree "$WORKTREE")
+fi
+case $MODE in
+  bypass) args+=(--permission-mode bypassPermissions) ;;
+  *) args+=(--permission-mode default) ;;
+esac
+
+# Pre-accept Claude's "trust this folder" dialog, which would otherwise block Remote Control.
+trust-dir "$PWD" || echo "warning: could not pre-trust $PWD"
+
+STARTED_ONCE=1
+reg_save
+
+set +e
+claude "${args[@]}" --remote-control "$name"
+rc=$?
+set -e
+
+if (( shutting )); then
+  echo "interrupted by shutdown; will resume on next boot"
+  exit 0
+fi
+STATUS=finished
+reg_save
+echo "claude exited (rc=$rc); session finished"

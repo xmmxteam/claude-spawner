@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# resume-session <name> | --all-running
+source /opt/launcher/lib/lib.sh
+
+[[ $# -eq 1 ]] || die "usage: resume-session <name> | --all-running"
+
+if [[ $1 == --all-running ]]; then
+  shopt -s nullglob
+  for f in "$SESSIONS"/*.env; do
+    n=$(basename "$f" .env)
+    if ( reg_load "$n"; [[ $STATUS == running ]] ) && ! is_live "$n"; then
+      start_session "$n" && echo "resumed '$n'" || echo "failed to resume '$n'" >&2
+    fi
+  done
+  exit 0
+fi
+
+reg_load "$1"
+is_live "$1" && die "session '$1' is already running"
+STATUS=running
+reg_save
+start_session "$1"
+echo "resumed '$1'"

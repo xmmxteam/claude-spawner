@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Container entrypoint: seeds config, starts tmux and ttyd, waits for a Claude login,
+# starts the launcher, resumes sessions that were running, then keeps the launcher alive.
+source /opt/launcher/lib/lib.sh
+
+log() { echo "[entrypoint] $*"; }
+
+mkdir -p "$HOME/.claude"
+# Merge the seed over any existing user settings (seed keys win).
+user_settings=$HOME/.claude/settings.json
+[[ -s $user_settings ]] || echo '{}' > "$user_settings"
+jq -s '.[0] * .[1]' "$user_settings" /opt/launcher/config/user-settings.json > "$user_settings.tmp"
+mv "$user_settings.tmp" "$user_settings"
+
+if [[ -n ${GH_TOKEN:-} ]]; then gh auth setup-git || true; fi
+if [[ -n ${FORGEJO_HOST:-} && -n ${FORGEJO_TOKEN:-} ]]; then
+  git config --global "credential.https://${FORGEJO_HOST}.helper" \
+    '!f() { echo "username=${FORGEJO_USER}"; echo "password=${FORGEJO_TOKEN}"; }; f'
+fi
+
+tm start-server \; set -g exit-empty off
+ttyd -p 7681 -W bash -l &
+
+trap 'log "terminating"; exit 0' TERM INT
+
+logged_in() { [[ -s $HOME/.claude/.credentials.json ]]; }
+
+while true; do
+  if ! logged_in; then
+    log "not logged in: open the ttyd page (port 7681) and run 'claude' then /login"
+  elif ! is_live launcher; then
+    log "starting launcher"
+    tm new-session -d -s launcher -c "$WORKSPACE" start-launcher
+    resume-session --all-running || true
+  fi
+  sleep 30 &
+  wait $!
+done

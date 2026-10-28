@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# list-sessions
+source /opt/launcher/lib/lib.sh
+
+shopt -s nullglob
+printf '%-24s %-9s %-5s %-8s %s\n' NAME STATUS LIVE MODE DIR
+for f in "$SESSIONS"/*.env; do
+  n=$(basename "$f" .env)
+  (
+    reg_load "$n"
+    live=no; is_live "$n" && live=yes
+    printf '%-24s %-9s %-5s %-8s %s\n' "$NAME" "$STATUS" "$live" "$MODE" "${DIR#"$WORKSPACE"/}"
+  )
+done

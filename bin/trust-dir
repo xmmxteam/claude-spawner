@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# trust-dir <dir>
+# Marks a folder as trusted in ~/.claude.json so Claude skips its "trust this folder" dialog.
+# Serialised with a lock because several sessions can start at once.
+set -euo pipefail
+
+cfg=$HOME/.claude.json
+(
+  flock 9
+  [[ -s $cfg ]] || echo '{}' > "$cfg"
+  tmp=$(mktemp "$cfg.XXXXXX")
+  jq --arg d "${1:?usage: trust-dir <dir>}" '.projects[$d].hasTrustDialogAccepted = true' "$cfg" > "$tmp"
+  mv "$tmp" "$cfg"
+) 9>"$cfg.lock"

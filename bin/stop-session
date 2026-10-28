@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# stop-session <name>
+source /opt/launcher/lib/lib.sh
+
+[[ $# -eq 1 ]] || die "usage: stop-session <name>"
+reg_load "$1"
+STATUS=finished
+reg_save
+if is_live "$1"; then tm kill-session -t "=$1"; fi
+echo "stopped '$1'"

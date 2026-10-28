@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# clone-repo <owner/repo | https://host/owner/repo[.git]>
+# Clones into $WORKSPACE/<owner>/<repo>. Only hosts in ALLOWED_GIT_HOSTS are accepted.
+source /opt/launcher/lib/lib.sh
+
+[[ $# -eq 1 ]] || die "usage: clone-repo <owner/repo | https://host/owner/repo>"
+arg=${1%/}
+arg=${arg%.git}
+allowed=${ALLOWED_GIT_HOSTS:-github.com}
+
+if [[ $arg =~ ^https://([^/]+)/([A-Za-z0-9._-]+)/([A-Za-z0-9._-]+)$ ]]; then
+  host=${BASH_REMATCH[1]} owner=${BASH_REMATCH[2]} repo=${BASH_REMATCH[3]}
+elif [[ $arg =~ ^([A-Za-z0-9._-]+)/([A-Za-z0-9._-]+)$ ]]; then
+  host=github.com owner=${BASH_REMATCH[1]} repo=${BASH_REMATCH[2]}
+else
+  die "unrecognised repository: $1"
+fi
+
+[[ " $allowed " == *" $host "* ]] || die "host not allowed: $host (allowed: $allowed)"
+[[ $owner != .* && $repo != .* ]] || die "invalid owner or repo name"
+
+dest=$WORKSPACE/$owner/$repo
+[[ ! -e $dest ]] || die "already exists: ${dest#"$WORKSPACE"/}"
+mkdir -p "$WORKSPACE/$owner"
+git clone -- "https://$host/$owner/$repo.git" "$dest"
+echo "cloned to ${dest#"$WORKSPACE"/}"

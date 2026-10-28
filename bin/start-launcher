@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Runs inside the "launcher" tmux session. The launcher is restricted by --tools Bash (the only
+# control with no settings equivalent) plus a root-owned settings file whose dontAsk mode denies
+# every command not on the allowlist. Managed settings are not used because they would also
+# restrict the project sessions.
+cd "${WORKSPACE:-/workspace}" || exit 1
+
+exec claude --remote-control launcher \
+  --tools Bash \
+  --settings /opt/launcher/config/launcher-settings.json \
+  --strict-mcp-config \
+  --append-system-prompt "$(cat /opt/launcher/config/launcher-prompt.md)"

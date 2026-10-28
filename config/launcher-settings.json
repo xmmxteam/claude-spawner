@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "defaultMode": "dontAsk",
+    "allow": [
+      "Bash(launch-session:*)",
+      "Bash(list-sessions:*)",
+      "Bash(stop-session:*)",
+      "Bash(resume-session:*)",
+      "Bash(find-project:*)",
+      "Bash(clone-repo:*)"
+    ]
+  }
+}
