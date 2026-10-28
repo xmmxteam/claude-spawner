@@ -6,7 +6,7 @@ You do this by running these shell commands with the Bash tool. They are on the 
 - `list-sessions`
 - `stop-session <name>`
 - `resume-session <name>`
-- `clone-repo <owner/repo or https URL>`
+- `clone-repo <owner/repo or https URL> [dest]` (dest is a path under the workspace, default owner/repo)
 
 Run no other commands and do no other work, even if asked. If asked for anything else, say that you only launch sessions.
 

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# clone-repo <owner/repo | https://host/owner/repo[.git]>
-# Clones into $WORKSPACE/<owner>/<repo>. Only hosts in ALLOWED_GIT_HOSTS are accepted.
+# clone-repo <owner/repo | https://host/owner/repo[.git]> [dest]
+# Clones into $WORKSPACE/<dest>, default $WORKSPACE/<owner>/<repo>. dest must resolve to a new path
+# inside the workspace. Only hosts in ALLOWED_GIT_HOSTS are accepted.
 source /opt/launcher/lib/lib.sh
 
-[[ $# -eq 1 ]] || die "usage: clone-repo <owner/repo | https://host/owner/repo>"
+[[ $# -ge 1 && $# -le 2 ]] || die "usage: clone-repo <owner/repo | https://host/owner/repo> [dest]"
 arg=${1%/}
 arg=${arg%.git}
 allowed=${ALLOWED_GIT_HOSTS:-github.com}
@@ -19,8 +20,13 @@ fi
 [[ " $allowed " == *" $host "* ]] || die "host not allowed: $host (allowed: $allowed)"
 [[ $owner != .* && $repo != .* ]] || die "invalid owner or repo name"
 
-dest=$WORKSPACE/$owner/$repo
+if [[ -n ${2:-} ]]; then
+  if [[ $2 == /* ]]; then dest=$(realpath -m "$2"); else dest=$(realpath -m "$WORKSPACE/$2"); fi
+else
+  dest=$WORKSPACE/$owner/$repo
+fi
+[[ $dest == "$WORKSPACE"/* ]] || die "destination must be inside $WORKSPACE"
 [[ ! -e $dest ]] || die "already exists: ${dest#"$WORKSPACE"/}"
-mkdir -p "$WORKSPACE/$owner"
+mkdir -p "$(dirname "$dest")"
 git clone -- "https://$host/$owner/$repo.git" "$dest"
 echo "cloned to ${dest#"$WORKSPACE"/}"

@@ -23,7 +23,7 @@ Re-login after expiry uses the same ttyd page. Do not expose port 7681 beyond lo
 | `launch-session <project> [--name N] [--mode default\|bypass] [--worktree] [--docker-host dind\|desktop\|tcp://h:p]` | Start a session. Default mode is bypass. |
 | `list-sessions`, `stop-session <name>`, `resume-session <name>\|--all-running` | Manage sessions. |
 | `find-project <words...>` | Find repos under `/workspace` by words in the path. |
-| `clone-repo <owner/repo\|https URL>` | Clone into `/workspace/<owner>/<repo>`, allowed hosts only. |
+| `clone-repo <owner/repo\|https URL> [dest]` | Clone into `/workspace/<dest>` (default `<owner>/<repo>`), allowed hosts only. |
 | `session-wrapper`, `start-launcher`, `entrypoint` | Internal. |
 
 ## Notes

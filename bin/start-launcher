@@ -3,10 +3,47 @@
 # control with no settings equivalent) plus a root-owned settings file whose dontAsk mode denies
 # every command not on the allowlist. Managed settings are not used because they would also
 # restrict the project sessions.
-cd "${WORKSPACE:-/workspace}" || exit 1
+#
+# Like project sessions, the launcher resumes its conversation after a container restart, and
+# starts a new one after a normal /exit.
+source /opt/launcher/lib/lib.sh
 
-exec claude --remote-control launcher \
+state_file=$STATE/launcher.env
+SID= STATUS=
+# shellcheck disable=SC1090
+[[ -f $state_file ]] && source "$state_file"
+
+save_state() {
+  { printf 'SID=%q\n' "$SID"; printf 'STATUS=%q\n' "$STATUS"; } > "$state_file.tmp"
+  mv "$state_file.tmp" "$state_file"
+}
+
+shutting=0
+trap 'shutting=1' HUP TERM
+
+# Resume only when a transcript exists; otherwise start a new session.
+if [[ $STATUS == running && -n $SID ]] && compgen -G "$HOME/.claude/projects/*/$SID.jsonl" >/dev/null; then
+  args=(--resume "$SID")
+else
+  SID=$(cat /proc/sys/kernel/random/uuid)
+  args=(--session-id "$SID" --model haiku) # alias: always the latest Haiku
+fi
+STATUS=running
+save_state
+
+cd "$WORKSPACE" || exit 1
+
+set +e
+claude "${args[@]}" --remote-control launcher \
   --tools Bash \
   --settings /opt/launcher/config/launcher-settings.json \
   --strict-mcp-config \
   --append-system-prompt "$(cat /opt/launcher/config/launcher-prompt.md)"
+set -e
+
+if (( shutting )); then
+  echo "interrupted by shutdown; will resume on next boot"
+  exit 0
+fi
+STATUS=finished
+save_state
