@@ -22,7 +22,7 @@ if [[ $project == /* ]]; then dir=$(realpath -m "$project"); else dir=$(realpath
 
 case $dh in
   "") dh_url= ;;
-  dind) dh_url=tcp://dind:2375 ;;
+  dind) dh_url=${DIND_DOCKER_HOST:-tcp://dind:2375} ;;
   desktop) dh_url=${DESKTOP_DOCKER_HOST:?DESKTOP_DOCKER_HOST is not set} ;;
   tcp://*) [[ $dh =~ ^tcp://[A-Za-z0-9._-]+:[0-9]+$ ]] || die "bad docker host: $dh"; dh_url=$dh ;;
   *) die "bad --docker-host: $dh" ;;

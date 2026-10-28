@@ -33,6 +33,9 @@ if ! grep -qs 'codex@openai-codex' "$HOME/.claude/plugins/installed_plugins.json
     || log "Codex plugin install failed"
 fi
 
+if [[ -n ${GIT_USER_NAME:-} ]]; then git config --global user.name "$GIT_USER_NAME"; fi
+if [[ -n ${GIT_USER_EMAIL:-} ]]; then git config --global user.email "$GIT_USER_EMAIL"; fi
+
 if [[ -n ${GH_TOKEN:-} ]]; then gh auth setup-git || true; fi
 if [[ -n ${FORGEJO_HOST:-} && -n ${FORGEJO_TOKEN:-} ]]; then
   git config --global "credential.https://${FORGEJO_HOST}.helper" \
