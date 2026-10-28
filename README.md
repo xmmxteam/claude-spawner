@@ -12,7 +12,7 @@ mkdir secrets               # optional: kubeconfig, talosconfig
 docker compose up -d --build
 ```
 
-Open http://localhost:7681 (ttyd), run `claude`, and complete `/login`. The launcher starts within 30 seconds and appears in the Claude app as "launcher". Ask it to open a project.
+Open http://localhost:7681 (ttyd), run `claude`, and complete `/login`. The launcher starts within 30 seconds and appears in the Claude app as "Claude Spawner". Ask it to open a project.
 
 Re-login after expiry uses the same ttyd page. Do not expose port 7681 beyond localhost, LAN or a VPN.
 

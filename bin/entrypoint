@@ -11,6 +11,27 @@ user_settings=$HOME/.claude/settings.json
 [[ -s $user_settings ]] || echo '{}' > "$user_settings"
 jq -s '.[0] * .[1]' "$user_settings" /opt/launcher/config/user-settings.json > "$user_settings.tmp"
 mv "$user_settings.tmp" "$user_settings"
+cp /opt/launcher/config/container-CLAUDE.md "$HOME/.claude/CLAUDE.md"
+
+# Hindsight memory: config comes from secrets/, the plugin (hooks, MCP server, skill) is installed once.
+if [[ -f /secrets/hindsight-coding-agent.json ]]; then
+  mkdir -p "$HOME/.hindsight"
+  cp /secrets/hindsight-coding-agent.json "$HOME/.hindsight/coding-agent.json"
+  if ! grep -q 'hindsight' "$HOME/.claude/settings.json"; then
+    log "installing Hindsight coding-agent plugin"
+    npx -y @vectorize-io/hindsight-coding-agents install claude-code --server self-hosted \
+      --api-url "$(jq -r '.apiUrl // empty' "$HOME/.hindsight/coding-agent.json")" \
+      || log "Hindsight install failed; sessions will run without memory"
+  fi
+fi
+
+# Codex plugin for Claude Code (installed once; plugin state lives on the home volume).
+# The Codex login itself is interactive: run `codex login --device-auth` in the ttyd terminal.
+if ! grep -qs 'codex@openai-codex' "$HOME/.claude/plugins/installed_plugins.json"; then
+  log "installing the Codex plugin"
+  { claude plugin marketplace add openai/codex-plugin-cc && claude plugin install codex@openai-codex; } \
+    || log "Codex plugin install failed"
+fi
 
 if [[ -n ${GH_TOKEN:-} ]]; then gh auth setup-git || true; fi
 if [[ -n ${FORGEJO_HOST:-} && -n ${FORGEJO_TOKEN:-} ]]; then

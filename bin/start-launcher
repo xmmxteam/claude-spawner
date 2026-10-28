@@ -34,7 +34,7 @@ save_state
 cd "$WORKSPACE" || exit 1
 
 set +e
-claude "${args[@]}" --remote-control launcher \
+claude "${args[@]}" --remote-control "Claude Spawner" \
   --tools Bash \
   --settings /opt/launcher/config/launcher-settings.json \
   --strict-mcp-config \
