@@ -61,9 +61,12 @@ RUN set -eux; \
     curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable -c clippy -c rustfmt --no-modify-path
 
 FROM fetch AS dotnet
-ARG DOTNET_CHANNEL=10.0
+ARG DOTNET_CHANNELS="8.0 9.0 10.0"
 RUN set -eux; \
-    curl -fsSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel "$DOTNET_CHANNEL" --install-dir /out
+    curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh; \
+    for channel in $DOTNET_CHANNELS; do \
+      bash /tmp/dotnet-install.sh --channel "$channel" --install-dir /out; \
+    done
 
 # Claude Code needs node to install; only its output is carried forward.
 FROM fetch AS claude-code
