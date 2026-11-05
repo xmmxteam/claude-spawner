@@ -11,11 +11,11 @@ ARG UBUNTU_VERSION=26.04
 # ---- fetch stage: minimal image with just what the download stages need ----
 FROM ubuntu:${UBUNTU_VERSION} AS fetch
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates curl jq unzip xz-utils \
+ && apt-get install -y --no-install-recommends ca-certificates curl jq libatomic1 unzip xz-utils \
  && rm -rf /var/lib/apt/lists/*
 
 FROM fetch AS node
-ARG NODE_MAJOR=24
+ARG NODE_MAJOR=26
 RUN set -eux; \
     case "$(dpkg --print-architecture)" in amd64) arch=x64 ;; arm64) arch=arm64 ;; esac; \
     ver=$(curl -fsSL https://nodejs.org/dist/index.json | jq -r --arg m "v${NODE_MAJOR}." '[.[] | select(.version | startswith($m))][0].version'); \
@@ -30,7 +30,7 @@ RUN set -eux; mkdir /out; \
 
 FROM fetch AS helm
 RUN set -eux; mkdir /out; \
-    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | PATH="/out:$PATH" USE_SUDO=false HELM_INSTALL_DIR=/out bash
+    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | PATH="/out:$PATH" USE_SUDO=false HELM_INSTALL_DIR=/out bash
 
 FROM fetch AS talosctl
 RUN set -eux; mkdir /out; \
@@ -112,7 +112,7 @@ RUN set -eux; \
     echo "deb [arch=$arch signed-by=/etc/apt/keyrings/microsoft.asc] https://packages.microsoft.com/repos/azure-cli/ $codename main" > /etc/apt/sources.list.d/azure-cli.list; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
-      tzdata locales gcc libc6-dev make git openssh-client openssl bind9-dnsutils tmux sudo jq ripgrep unzip less procps python3 python3-pip ttyd \
+      tzdata locales gcc libc6-dev make git openssh-client openssl bind9-dnsutils tmux sudo jq libatomic1 ripgrep unzip less procps python3 python3-pip ttyd \
       gh docker-ce-cli docker-buildx-plugin docker-compose-plugin azure-cli \
       $(apt-cache search --names-only '^libicu[0-9]+$' | cut -d' ' -f1); \
     locale-gen en_AU.UTF-8; \
