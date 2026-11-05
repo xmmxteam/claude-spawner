@@ -1,4 +1,4 @@
-# claude-launcher
+# claude-spawner
 
 Headless Claude Code in Docker, controlled from the Claude mobile app via Remote Control.
 
