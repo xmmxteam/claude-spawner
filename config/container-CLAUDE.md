@@ -247,6 +247,13 @@ Skip progress narration and anything the diff or description already says. Edit 
 - `gh`, the GitHub CLI, is available globally and authenticates via the `GH_TOKEN` environment variable.
 - `az`, the Azure CLI, is available and logged in.
 
+### Docker
+
+- `DOCKER_HOST` points at a remote Docker host over SSH. It comes from the `DEFAULT_DOCKER_HOST` environment variable, and you must not write its address or hostname into files, commits or messages.
+- The local dind sidecar is at `DIND_DOCKER_HOST`. Use it with `DOCKER_HOST=$DIND_DOCKER_HOST docker ...` if `docker info` fails to connect or the remote host behaves oddly (SSH errors, hangs, missing images or volumes).
+- If `DOCKER_HOST` is `ssh://...` and the SSH connection is not configured (key rejected, no identity, host key unknown), tell the user once, then use dind without asking.
+- Paths in bind mounts refer to the remote Docker host's filesystem, not this container's, so prefer dind for builds that mount `/workspace`.
+
 ### Context7 tools
 
 Use the Context7 tools to fetch current documentation for third-party libraries such as Radzen, Entity Framework, Hangfire, Serilog, xUnit, and bUnit. Their docs may be newer than the training cutoff and more economical than web searches.

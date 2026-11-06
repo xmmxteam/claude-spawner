@@ -38,6 +38,38 @@ fi
 if [[ -n ${GIT_USER_NAME:-} ]]; then git config --global user.name "$GIT_USER_NAME"; fi
 if [[ -n ${GIT_USER_EMAIL:-} ]]; then git config --global user.email "$GIT_USER_EMAIL"; fi
 
+# Default Docker over SSH: an optional key and known_hosts from secrets/ get an ssh config entry
+# derived from DEFAULT_DOCKER_HOST. Without the key, the container's existing SSH setup is used.
+if [[ ${DEFAULT_DOCKER_HOST:-} == ssh://* && -f /secrets/docker-ssh-key ]]; then
+  log "configuring SSH for the default Docker host"
+  rest=${DEFAULT_DOCKER_HOST#ssh://}; rest=${rest%%/*}
+  user= port=
+  if [[ $rest == *@* ]]; then user=${rest%%@*}; rest=${rest#*@}; fi
+  if [[ $rest == *:* ]]; then port=${rest##*:}; rest=${rest%:*}; fi
+  install -d -m 0700 "$HOME/.ssh"
+  install -m 0600 /secrets/docker-ssh-key "$HOME/.ssh/docker-ssh-key"
+  {
+    echo "Host $rest"
+    [[ -n $user ]] && echo "  User $user"
+    [[ -n $port ]] && echo "  Port $port"
+    echo "  IdentityFile ~/.ssh/docker-ssh-key"
+    echo "  IdentitiesOnly yes"
+    echo "  BatchMode yes"
+    if [[ -f /secrets/docker-known-hosts ]]; then
+      install -m 0600 /secrets/docker-known-hosts "$HOME/.ssh/docker-known-hosts"
+      echo "  UserKnownHostsFile ~/.ssh/docker-known-hosts"
+      echo "  StrictHostKeyChecking yes"
+    else
+      echo "  StrictHostKeyChecking accept-new"
+    fi
+  } > "$HOME/.ssh/docker.conf"
+  # Include must come before any Host block to apply to it.
+  if ! grep -qs 'docker.conf' "$HOME/.ssh/config"; then
+    { echo "Include ~/.ssh/docker.conf"; cat "$HOME/.ssh/config" 2>/dev/null || true; } > "$HOME/.ssh/config.tmp"
+    install -m 0600 "$HOME/.ssh/config.tmp" "$HOME/.ssh/config"; rm "$HOME/.ssh/config.tmp"
+  fi
+fi
+
 if [[ -n ${GH_TOKEN:-} ]]; then gh auth setup-git || true; fi
 if [[ -n ${FORGEJO_HOST:-} && -n ${FORGEJO_TOKEN:-} ]]; then
   git config --global "credential.https://${FORGEJO_HOST}.helper" \

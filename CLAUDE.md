@@ -36,7 +36,7 @@ State lives on the home volume under `~/.launcher/` (`$STATE`). Each session has
 - `config/container-CLAUDE.md` is copied to `~/.claude/CLAUDE.md` inside the container on every boot, so it is the instructions file for sessions running there. This `CLAUDE.md` is for working on this repo.
 - `config/user-settings.json` is merged over the container's `~/.claude/settings.json` on boot, and the seed keys win.
 - The launcher is locked down by `--tools Bash` in `bin/start-launcher` plus the root-owned `config/launcher-settings.json`. Managed settings are deliberately not used, because they would also restrict project sessions. Keep the launcher's allowed commands in sync with the scripts in `bin/`.
-- `clone-repo` only clones from hosts in `ALLOWED_GIT_HOSTS`. `launch-session --docker-host` accepts `dind`, `desktop` (from `DESKTOP_DOCKER_HOST`) or `tcp://host:port`, and validates the value.
+- `clone-repo` only clones from hosts in `ALLOWED_GIT_HOSTS`. `launch-session --docker-host` accepts `dind`, `default` (from `DEFAULT_DOCKER_HOST`) or `tcp://host:port`, and validates the value.
 
 ### Dockerfile
 
@@ -44,4 +44,4 @@ Download tools are fetched in separate parallel stages that copy only `/out` int
 
 ### Compose
 
-`claude` talks to a privileged `docker:dind` sidecar through `DOCKER_HOST=tcp://dind:2375`. The `home`, `workspace` and `dind-data` volumes persist logins, repos and images. `./secrets` is mounted read-only at `/secrets` for the kubeconfig, talosconfig and `hindsight-coding-agent.json`.
+`DOCKER_HOST` defaults to `DEFAULT_DOCKER_HOST` (an `ssh://` URL) and falls back to the privileged `docker:dind` sidecar, which is always reachable at `DIND_DOCKER_HOST`. Never write the remote host's address into the repo, only the env var names. `bin/entrypoint` sets up the SSH key and config when `secrets/docker-ssh-key` exists. The `home`, `workspace` and `dind-data` volumes persist logins, repos and images. `./secrets` is mounted read-only at `/secrets` for the kubeconfig, talosconfig and `hindsight-coding-agent.json`.

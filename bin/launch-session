@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# launch-session <project> [--name N] [--mode default|bypass] [--worktree] [--docker-host dind|desktop|tcp://host:port]
+# launch-session <project> [--name N] [--mode default|bypass] [--worktree] [--docker-host dind|default|tcp://host:port]
 source /opt/launcher/lib/lib.sh
 
-[[ $# -ge 1 ]] || die "usage: launch-session <project> [--name N] [--mode default|bypass] [--worktree] [--docker-host dind|desktop|tcp://host:port]"
+[[ $# -ge 1 ]] || die "usage: launch-session <project> [--name N] [--mode default|bypass] [--worktree] [--docker-host dind|default|tcp://host:port]"
 project=$1; shift
 name=; mode=bypass; worktree=; dh=
 while (( $# )); do
@@ -23,7 +23,7 @@ if [[ $project == /* ]]; then dir=$(realpath -m "$project"); else dir=$(realpath
 case $dh in
   "") dh_url= ;;
   dind) dh_url=${DIND_DOCKER_HOST:-tcp://dind:2375} ;;
-  desktop) dh_url=${DESKTOP_DOCKER_HOST:?DESKTOP_DOCKER_HOST is not set} ;;
+  default) dh_url=${DEFAULT_DOCKER_HOST:?DEFAULT_DOCKER_HOST is not set} ;;
   tcp://*) [[ $dh =~ ^tcp://[A-Za-z0-9._-]+:[0-9]+$ ]] || die "bad docker host: $dh"; dh_url=$dh ;;
   *) die "bad --docker-host: $dh" ;;
 esac

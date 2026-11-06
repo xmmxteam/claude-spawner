@@ -5,7 +5,9 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      DOCKER_HOST: tcp://dind:2375
+      # Default Docker is a remote host over SSH; falls back to the dind sidecar when unset.
+      DOCKER_HOST: ${DEFAULT_DOCKER_HOST:-tcp://dind:2375}
+      DIND_DOCKER_HOST: tcp://dind:2375
       KUBECONFIG: /secrets/kubeconfig
       TALOSCONFIG: /secrets/talosconfig
     volumes:

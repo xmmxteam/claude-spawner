@@ -20,11 +20,17 @@ Re-login after expiry uses the same ttyd page. Do not expose port 7681 beyond lo
 
 | Script | Purpose |
 | --- | --- |
-| `launch-session <project> [--name N] [--mode default\|bypass] [--worktree] [--docker-host dind\|desktop\|tcp://h:p]` | Start a session. Default mode is bypass. |
+| `launch-session <project> [--name N] [--mode default\|bypass] [--worktree] [--docker-host dind\|default\|tcp://h:p]` | Start a session. Default mode is bypass. |
 | `list-sessions`, `stop-session <name>`, `resume-session <name>\|--all-running` | Manage sessions. |
 | `find-project <words...>` | Find repos under `/workspace` by words in the path. |
 | `clone-repo <owner/repo\|https URL> [dest]` | Clone into `/workspace/<dest>` (default `<owner>/<repo>`), allowed hosts only. |
 | `session-wrapper`, `start-launcher`, `entrypoint` | Internal. |
+
+## Docker
+
+Sessions use a remote Docker host over SSH when `DEFAULT_DOCKER_HOST` (`ssh://user@host[:port]`) is set, and the local dind sidecar otherwise. `DIND_DOCKER_HOST` always points at dind, and Claude falls back to it if the remote host is unreachable.
+
+If `secrets/docker-ssh-key` exists, the entrypoint installs it into `~/.ssh` along with the optional `secrets/docker-known-hosts` and writes an ssh config entry for the host. Without the key, the container's existing SSH setup is used.
 
 ## Notes
 
