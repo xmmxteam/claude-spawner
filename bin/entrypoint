@@ -40,35 +40,40 @@ if [[ -n ${GIT_USER_EMAIL:-} ]]; then git config --global user.email "$GIT_USER_
 
 # Default Docker over SSH: an optional key and known_hosts from secrets/ get an ssh config entry
 # derived from DEFAULT_DOCKER_HOST. Without the key, the container's existing SSH setup is used.
-if [[ ${DEFAULT_DOCKER_HOST:-} == ssh://* && -f /secrets/docker-ssh-key ]]; then
+# Called as "setup_docker_ssh || ...", where errexit is off, so each step checks itself.
+setup_docker_ssh() {
+  rm -f "$HOME/.ssh/docker.conf"
+  [[ ${DEFAULT_DOCKER_HOST:-} == ssh://* && -f /secrets/docker-ssh-key ]] || return 0
   log "configuring SSH for the default Docker host"
-  rest=${DEFAULT_DOCKER_HOST#ssh://}; rest=${rest%%/*}
-  user= port=
+  local rest=${DEFAULT_DOCKER_HOST#ssh://} user= port=
+  rest=${rest%%/*}
   if [[ $rest == *@* ]]; then user=${rest%%@*}; rest=${rest#*@}; fi
   if [[ $rest == *:* ]]; then port=${rest##*:}; rest=${rest%:*}; fi
-  install -d -m 0700 "$HOME/.ssh"
-  install -m 0600 /secrets/docker-ssh-key "$HOME/.ssh/docker-ssh-key"
+  install -d -m 0700 "$HOME/.ssh" || return 1
+  install -m 0600 /secrets/docker-ssh-key "$HOME/.ssh/docker-ssh-key" || return 1
   {
     echo "Host $rest"
-    [[ -n $user ]] && echo "  User $user"
-    [[ -n $port ]] && echo "  Port $port"
+    if [[ -n $user ]]; then echo "  User $user"; fi
+    if [[ -n $port ]]; then echo "  Port $port"; fi
     echo "  IdentityFile ~/.ssh/docker-ssh-key"
     echo "  IdentitiesOnly yes"
     echo "  BatchMode yes"
     if [[ -f /secrets/docker-known-hosts ]]; then
-      install -m 0600 /secrets/docker-known-hosts "$HOME/.ssh/docker-known-hosts"
+      install -m 0600 /secrets/docker-known-hosts "$HOME/.ssh/docker-known-hosts" || return 1
       echo "  UserKnownHostsFile ~/.ssh/docker-known-hosts"
       echo "  StrictHostKeyChecking yes"
     else
       echo "  StrictHostKeyChecking accept-new"
     fi
-  } > "$HOME/.ssh/docker.conf"
+  } > "$HOME/.ssh/docker.conf" || return 1
   # Include must come before any Host block to apply to it.
   if ! grep -qs 'docker.conf' "$HOME/.ssh/config"; then
-    { echo "Include ~/.ssh/docker.conf"; cat "$HOME/.ssh/config" 2>/dev/null || true; } > "$HOME/.ssh/config.tmp"
-    install -m 0600 "$HOME/.ssh/config.tmp" "$HOME/.ssh/config"; rm "$HOME/.ssh/config.tmp"
+    { echo "Include ~/.ssh/docker.conf"; cat "$HOME/.ssh/config" 2>/dev/null || true; } > "$HOME/.ssh/config.tmp" || return 1
+    install -m 0600 "$HOME/.ssh/config.tmp" "$HOME/.ssh/config" || return 1
+    rm -f "$HOME/.ssh/config.tmp"
   fi
-fi
+}
+setup_docker_ssh || log "SSH setup for the default Docker host failed; sessions may need to use dind"
 
 if [[ -n ${GH_TOKEN:-} ]]; then gh auth setup-git || true; fi
 if [[ -n ${FORGEJO_HOST:-} && -n ${FORGEJO_TOKEN:-} ]]; then

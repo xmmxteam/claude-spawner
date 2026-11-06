@@ -13,7 +13,9 @@ die() { echo "error: $*" >&2; exit 1; }
 tm() { tmux -L launcher "$@"; }
 is_live() { tm has-session -t "=$1" 2>/dev/null; }
 
-valid_name() { [[ $1 =~ ^[A-Za-z0-9._-]+$ ]]; }
+# Names must not start with "-" (they reach claude as an argument) and must not clash with the
+# launcher and workspace tmux sessions that share the socket.
+valid_name() { [[ $1 =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ && $1 != launcher && $1 != workspace ]]; }
 reg_file() { echo "$SESSIONS/$1.env"; }
 
 # Registry entries are shell-quoted var files: NAME DIR SID MODE WORKTREE DOCKER_HOST_ARG STATUS STARTED_ONCE
@@ -39,7 +41,15 @@ start_session() {
   cmd="session-wrapper $(printf %q "$1")"
   (
     reg_load "$1"
-    [[ -n $DOCKER_HOST_ARG ]] && cmd="env DOCKER_HOST=$(printf %q "$DOCKER_HOST_ARG") $cmd"
+    # DOCKER_HOST_ARG is "", "default" (the container's DOCKER_HOST) or "dind". Both are resolved
+    # here, not at launch, so a resumed session follows the current environment.
+    local url=
+    case $DOCKER_HOST_ARG in
+      ""|default) ;;
+      dind) url=${DIND_DOCKER_HOST:-tcp://dind:2375} ;;
+      *) url=$DOCKER_HOST_ARG ;; # entries written before the literal names existed hold a URL
+    esac
+    [[ -n $url ]] && cmd="env DOCKER_HOST=$(printf %q "$url") $cmd"
     tm new-session -d -s "$NAME" -c "$DIR" "$cmd"
   )
 }

@@ -26,9 +26,9 @@ All tmux sessions use the dedicated socket `tmux -L launcher`, through the `tm` 
 
 ### Session registry
 
-State lives on the home volume under `~/.launcher/` (`$STATE`). Each session has a shell-quoted var file at `sessions/<name>.env`, written by `reg_save` and read by `reg_load` in `lib/lib.sh`. The fields are `NAME DIR SID MODE WORKTREE DOCKER_HOST_ARG STATUS STARTED_ONCE`. If you add a field, add it to the `reg_save` loop and to `launch-session`.
+State lives on the home volume under `~/.launcher/` (`$STATE`). Each session has a shell-quoted var file at `sessions/<name>.env`, written by `reg_save` and read by `reg_load` in `lib/lib.sh`. The fields are `NAME DIR SID MODE WORKTREE DOCKER_HOST_ARG STATUS STARTED_ONCE`. If you add a field, add it to the `reg_save` loop and to `launch-session`. `DOCKER_HOST_ARG` holds the literal `dind` or `default` (or empty), and `start_session` resolves it on every start.
 
-`STATUS` drives restart behaviour. A container shutdown (HUP or TERM) leaves it as `running`, so the next boot resumes the session through `resume-session --all-running`. A normal Claude exit sets it to `finished`, and the session is not resumed. `session-wrapper` and `start-launcher` resume only when a transcript `$HOME/.claude/projects/*/$SID.jsonl` exists.
+`STATUS` drives restart behaviour. A container shutdown kills sessions before the wrapper can mark them, so it stays `running` and the next boot resumes the session through `resume-session --all-running`. Claude exiting with code 0 sets `finished` and any other code sets `failed`. Neither is resumed on boot, but `resume-session <name>` restarts a `failed` one. `session-wrapper` and `start-launcher` resume only when a transcript `$HOME/.claude/projects/*/$SID.jsonl` exists.
 
 ### Layout and conventions
 
@@ -36,7 +36,7 @@ State lives on the home volume under `~/.launcher/` (`$STATE`). Each session has
 - `config/container-CLAUDE.md` is copied to `~/.claude/CLAUDE.md` inside the container on every boot, so it is the instructions file for sessions running there. This `CLAUDE.md` is for working on this repo.
 - `config/user-settings.json` is merged over the container's `~/.claude/settings.json` on boot, and the seed keys win.
 - The launcher is locked down by `--tools Bash` in `bin/start-launcher` plus the root-owned `config/launcher-settings.json`. Managed settings are deliberately not used, because they would also restrict project sessions. Keep the launcher's allowed commands in sync with the scripts in `bin/`.
-- `clone-repo` only clones from hosts in `ALLOWED_GIT_HOSTS`. `launch-session --docker-host` accepts `dind`, `default` (from `DEFAULT_DOCKER_HOST`) or `tcp://host:port`, and validates the value.
+- `clone-repo` only clones from hosts in `ALLOWED_GIT_HOSTS` and refuses destinations with hidden path components, because a cloned `.claude/settings.json` would be loaded by the launcher or a project session. `launch-session --docker-host` accepts only `dind` or `default`, so the launcher cannot point a session at an arbitrary host. Session names are checked by `valid_name` in `lib/lib.sh`.
 
 ### Dockerfile
 

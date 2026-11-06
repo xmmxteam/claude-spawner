@@ -39,6 +39,8 @@ if (( shutting )); then
   echo "interrupted by shutdown; will resume on next boot"
   exit 0
 fi
-STATUS=finished
+# A non-zero exit (crash, failed --resume, bad flag) is marked failed, not finished, so list-sessions
+# shows it. Neither status is resumed on boot; resume-session restarts a failed one.
+if (( rc == 0 )); then STATUS=finished; else STATUS=failed; fi
 reg_save
-echo "claude exited (rc=$rc); session finished"
+echo "claude exited (rc=$rc); session $STATUS"

@@ -2,7 +2,7 @@
 
 Headless Claude Code in Docker, controlled from the Claude mobile app via Remote Control.
 
-An always-on **launcher** session (restricted to six scripts) starts one `claude --remote-control` session per project. Sessions run in tmux, are tracked in a registry on the volume, and are resumed on container restart unless they were exited or stopped.
+An always-on **launcher** session (restricted to the scripts below and read-only `gh repo list` and `gh org list`) starts one `claude --remote-control` session per project. Sessions run in tmux, are tracked in a registry on the volume, and are resumed on container restart unless they were exited, stopped or failed. A second always-on session, `workspace`, runs an unrestricted `claude remote-control` server so the container appears as a device in the Claude app.
 
 ## Run
 
@@ -20,20 +20,22 @@ Re-login after expiry uses the same ttyd page. Do not expose port 7681 beyond lo
 
 | Script | Purpose |
 | --- | --- |
-| `launch-session <project> [--name N] [--mode default\|bypass] [--worktree] [--docker-host dind\|default\|tcp://h:p]` | Start a session. Default mode is bypass. |
-| `list-sessions`, `stop-session <name>`, `resume-session <name>\|--all-running` | Manage sessions. |
+| `launch-session <project> [--name N] [--mode default\|bypass] [--worktree] [--docker-host dind\|default]` | Start a session. Default mode is bypass. Names must start with a letter or digit, and `launcher` and `workspace` are reserved. |
+| `list-sessions`, `stop-session <name>`, `resume-session <name>\|--all-running` | Manage sessions. `resume-session` also restarts a `failed` one. |
 | `find-project <words...>` | Find repos under `/workspace` by words in the path. |
-| `clone-repo <owner/repo\|https URL> [dest]` | Clone into `/workspace/<dest>` (default `<owner>/<repo>`), allowed hosts only. |
-| `session-wrapper`, `start-launcher`, `entrypoint` | Internal. |
+| `clone-repo <owner/repo\|https URL> [dest]` | Clone into `/workspace/<dest>` (default `<owner>/<repo>`), allowed hosts only. `dest` may not contain hidden components such as `.claude`. |
+| `session-wrapper`, `start-launcher`, `start-workspace`, `trust-dir`, `entrypoint` | Internal. `trust-dir` pre-accepts Claude's trust dialog for a directory. |
 
 ## Docker
 
-Sessions use a remote Docker host over SSH when `DEFAULT_DOCKER_HOST` (`ssh://user@host[:port]`) is set, and the local dind sidecar otherwise. `DIND_DOCKER_HOST` always points at dind, and Claude falls back to it if the remote host is unreachable.
+Sessions use a remote Docker host over SSH when `DEFAULT_DOCKER_HOST` (`ssh://user@host[:port]`) is set, and the local dind sidecar otherwise. `DIND_DOCKER_HOST` always points at dind. The fall back to dind when the remote host is unreachable is an instruction in `config/container-CLAUDE.md`, not code. `launch-session --docker-host dind` pins one session to dind, and `default` uses the container's `DOCKER_HOST`.
 
-If `secrets/docker-ssh-key` exists, the entrypoint installs it into `~/.ssh` along with the optional `secrets/docker-known-hosts` and writes an ssh config entry for the host. Without the key, the container's existing SSH setup is used.
+If `secrets/docker-ssh-key` exists, the entrypoint installs it into `~/.ssh` along with the optional `secrets/docker-known-hosts` and writes an ssh config entry for the host. Without the key, the container's existing SSH setup is used. A known_hosts entry for a non-default port must be written as `[host]:port`, and the remote user needs `docker` on its PATH and access to the Docker socket.
+
+Bind mounts (`-v`, compose `./path`) resolve on the remote host, not in this container, and the `workspace` volume is shared only with dind. Use dind for anything that mounts `/workspace`.
 
 ## Notes
 
 - The launcher is locked down by `--tools Bash` in `bin/start-launcher` and the root-owned `config/launcher-settings.json`. Managed settings are not used because they would also restrict project sessions.
 - Sessions hold broad credentials and run in bypass mode by default. The container is the only sandbox.
-- Unverified: whether `claude --remote-control` needs a TTY (tmux provides one), whether `/exit` returns a clean exit code, whether `--permission-mode dontAsk` and `skipDangerousModePermissionPrompt` behave as assumed, and resume after a worktree switch.
+- Unverified: whether `claude --remote-control` needs a TTY (tmux provides one), whether `/exit` returns exit code 0 (a non-zero exit marks the session `failed` rather than `finished`), whether `defaultMode: dontAsk` in `config/launcher-settings.json` denies commands outside the allowlist, whether `skipDangerousModePermissionPrompt` has any effect, and resume after a worktree switch. `--permission-mode dontAsk` itself is accepted by `claude`.

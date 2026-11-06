@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# launch-session <project> [--name N] [--mode default|bypass] [--worktree] [--docker-host dind|default|tcp://host:port]
+# launch-session <project> [--name N] [--mode default|bypass] [--worktree] [--docker-host dind|default]
 source /opt/launcher/lib/lib.sh
 
-[[ $# -ge 1 ]] || die "usage: launch-session <project> [--name N] [--mode default|bypass] [--worktree] [--docker-host dind|default|tcp://host:port]"
+[[ $# -ge 1 ]] || die "usage: launch-session <project> [--name N] [--mode default|bypass] [--worktree] [--docker-host dind|default]"
 project=$1; shift
 name=; mode=bypass; worktree=; dh=
 while (( $# )); do
@@ -20,13 +20,7 @@ done
 if [[ $project == /* ]]; then dir=$(realpath -m "$project"); else dir=$(realpath -m "$WORKSPACE/$project"); fi
 [[ $dir == "$WORKSPACE"/* && -d $dir ]] || die "not a directory inside $WORKSPACE: $project"
 
-case $dh in
-  "") dh_url= ;;
-  dind) dh_url=${DIND_DOCKER_HOST:-tcp://dind:2375} ;;
-  default) dh_url=${DEFAULT_DOCKER_HOST:?DEFAULT_DOCKER_HOST is not set} ;;
-  tcp://*) [[ $dh =~ ^tcp://[A-Za-z0-9._-]+:[0-9]+$ ]] || die "bad docker host: $dh"; dh_url=$dh ;;
-  *) die "bad --docker-host: $dh" ;;
-esac
+[[ -z $dh || $dh == dind || $dh == default ]] || die "bad --docker-host: $dh (use dind or default)"
 
 [[ -n $name ]] || name=$(basename "$dir")
 valid_name "$name" || die "invalid session name: $name"
@@ -35,9 +29,9 @@ if [[ -f $(reg_file "$name") ]]; then
   ( reg_load "$name"; [[ $STATUS != running ]] ) || die "session '$name' is registered as running; use resume-session"
 fi
 
-NAME=$name DIR=$dir MODE=$mode DOCKER_HOST_ARG=$dh_url STATUS=running STARTED_ONCE=0
+NAME=$name DIR=$dir MODE=$mode DOCKER_HOST_ARG=$dh STATUS=running STARTED_ONCE=0
 WORKTREE=; [[ -n $worktree ]] && WORKTREE=$name
 SID=$(cat /proc/sys/kernel/random/uuid)
 reg_save
 start_session "$name"
-echo "started '$name' in ${dir#"$WORKSPACE"/} (mode=$mode${worktree:+, worktree}${dh_url:+, docker=$dh_url})"
+echo "started '$name' in ${dir#"$WORKSPACE"/} (mode=$mode${worktree:+, worktree}${dh:+, docker=$dh})"
