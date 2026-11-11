@@ -31,7 +31,7 @@ Re-login after expiry uses the same ttyd page. Do not expose port 7681 beyond lo
 
 Every push to `main` that CI builds publishes `ghcr.io/xmmxteam/claude-spawner` with the tags `YYYY.MM.DD.N`, `sha-<short commit>` and `latest`. `N` is the workflow run number, so versions sort in build order. The version, commit and build time are image labels and the env vars `SPAWNER_VERSION`, `SPAWNER_COMMIT` and `SPAWNER_BUILT`. Local builds report `dev`.
 
-The build also saves the stamp and the tool versions to `/opt/launcher/version.txt`, and fails if a tool is missing. `bin/start-launcher` adds that file to the launcher's system prompt, so the launcher can report its version without running a command. `launcher-version` prints the same report with the versions installed now, which can differ for Rust because the `claude` user can update toolchains.
+The build also saves the stamp and the tool versions to `/opt/launcher/version.txt`, and fails if a tool is missing. `bin/start-launcher` adds that file to the launcher's system prompt, so the launcher can report its version without running a command. A resumed Claude session ignores a new system prompt, so the launcher starts a new conversation whenever the image version changes instead of resuming. `launcher-version` prints the same report with the versions installed now, which can differ for Rust because the `claude` user can update toolchains.
 
 ## Docker
 

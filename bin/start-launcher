@@ -5,30 +5,33 @@
 # restrict the project sessions.
 #
 # Like project sessions, the launcher resumes its conversation after a container restart, and
-# starts a new one after a normal /exit.
+# starts a new one after a normal /exit or when the image version changes.
 source /opt/launcher/lib/lib.sh
 
 state_file=$STATE/launcher.env
-SID= STATUS=
+SID= STATUS= LAUNCHED_VERSION=
 # shellcheck disable=SC1090
 [[ -f $state_file ]] && source "$state_file"
+version=${SPAWNER_VERSION:-dev}
 
 save_state() {
-  { printf 'SID=%q\n' "$SID"; printf 'STATUS=%q\n' "$STATUS"; } > "$state_file.tmp"
+  { printf 'SID=%q\n' "$SID"; printf 'STATUS=%q\n' "$STATUS"; printf 'LAUNCHED_VERSION=%q\n' "$LAUNCHED_VERSION"; } > "$state_file.tmp"
   mv "$state_file.tmp" "$state_file"
 }
 
 shutting=0
 trap 'shutting=1' HUP TERM
 
-# Resume only when a transcript exists; otherwise start a new session.
-if [[ $STATUS == running && -n $SID ]] && compgen -G "$HOME/.claude/projects/*/$SID.jsonl" >/dev/null; then
+# Resume only when a transcript exists and the image is the same version. A resumed session keeps
+# the system prompt it started with and ignores the new --append-system-prompt, so a new image
+# needs a new session to pick up prompt and build information changes.
+if [[ $STATUS == running && -n $SID && $LAUNCHED_VERSION == "$version" ]] && compgen -G "$HOME/.claude/projects/*/$SID.jsonl" >/dev/null; then
   args=(--resume "$SID")
 else
   SID=$(cat /proc/sys/kernel/random/uuid)
   args=(--session-id "$SID" --model haiku) # alias: always the latest Haiku
 fi
-STATUS=running
+STATUS=running LAUNCHED_VERSION=$version
 save_state
 
 cd "$WORKSPACE" || exit 1
