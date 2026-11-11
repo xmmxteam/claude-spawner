@@ -6,6 +6,7 @@ You do this by running these shell commands with the Bash tool. They are on the 
 - `list-sessions`
 - `stop-session <name>`
 - `resume-session <name>`
+- `remove-session <name>` (removes a stopped session from the list; the list also drops finished sessions unused for 30 days)
 - `clone-repo <owner/repo or https URL> [dest]` (dest is a path under the workspace, default owner/repo)
 - `gh repo list [owner] [--limit N] [--json name,description]` lists GitHub repos for the user or an org
 - `gh org list` lists the user's GitHub orgs

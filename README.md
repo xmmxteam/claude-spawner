@@ -21,15 +21,19 @@ Re-login after expiry uses the same ttyd page. Do not expose port 7681 beyond lo
 | Script | Purpose |
 | --- | --- |
 | `launch-session <project> [--name N] [--mode default\|bypass] [--worktree] [--docker-host dind\|default]` | Start a session. Default mode is bypass. Names must start with a letter or digit, and `launcher` and `workspace` are reserved. |
-| `list-sessions`, `stop-session <name>`, `resume-session <name>\|--all-running` | Manage sessions. `resume-session` also restarts a `failed` one. |
+| `list-sessions`, `stop-session <name>`, `resume-session <name>\|--all-running`, `remove-session <name>` | Manage sessions. `resume-session` also restarts a `failed` one. `remove-session` deletes a stopped session's entry from the list. |
 | `find-project <words...>` | Find repos under `/workspace` by words in the path. |
 | `spawner-version` | Print the claude-spawner version and the versions of the installed tools. |
 | `clone-repo <owner/repo\|https URL> [dest]` | Clone into `/workspace/<dest>` (default `<owner>/<repo>`), allowed hosts only. `dest` may not contain hidden components such as `.claude`. |
 | `session-wrapper`, `start-launcher`, `start-workspace`, `trust-dir`, `entrypoint` | Internal. `trust-dir` pre-accepts Claude's trust dialog for a directory. |
 
+## Session list cleanup
+
+The entrypoint deletes the entry of any `finished` or `failed` session that is not running and was last changed more than 30 days ago (`PRUNE_DAYS` in `lib/lib.sh`), checking every 30 seconds. "Last changed" is the entry file's modification time, which `reg_save` updates when a session starts, finishes, fails or is resumed. Running sessions are never removed. This only removes the list entry, and Claude deletes its own old transcripts separately (`cleanupPeriodDays`, 30 days by default).
+
 ## Slash commands
 
-The launcher session (and no other session) loads the `spawner` plugin from `config/spawner` with `--plugin-dir` in `bin/start-launcher`. It has one user-only skill per script: `/spawner:launch`, `/spawner:list`, `/spawner:stop`, `/spawner:resume`, `/spawner:find`, `/spawner:clone` and `/spawner:version`. Each passes its arguments to the matching script, for example `/spawner:launch home-ops --mode default`.
+The launcher session (and no other session) loads the `spawner` plugin from `config/spawner` with `--plugin-dir` in `bin/start-launcher`. It has one user-only skill per script: `/spawner:launch`, `/spawner:list`, `/spawner:stop`, `/spawner:resume`, `/spawner:remove`, `/spawner:find`, `/spawner:clone` and `/spawner:version`. Each passes its arguments to the matching script, for example `/spawner:launch home-ops --mode default`.
 
 ## Versioning
 

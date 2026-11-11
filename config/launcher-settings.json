@@ -6,6 +6,7 @@
       "Bash(list-sessions:*)",
       "Bash(stop-session:*)",
       "Bash(resume-session:*)",
+      "Bash(remove-session:*)",
       "Bash(find-project:*)",
       "Bash(clone-repo:*)",
       "Bash(spawner-version:*)",

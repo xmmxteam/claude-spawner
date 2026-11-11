@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# remove-session <name>
+# Deletes a session's registry entry so it no longer appears in list-sessions. A running session
+# must be stopped first. The project directory and Claude's transcript are left alone.
+source /opt/launcher/lib/lib.sh
+
+[[ $# -eq 1 ]] || die "usage: remove-session <name>"
+reg_load "$1"
+if is_live "$1"; then die "session '$1' is running; stop it first"; fi
+rm -f "$(reg_file "$1")"
+echo "removed '$1'"

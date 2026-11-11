@@ -30,6 +30,8 @@ State lives on the home volume under `~/.launcher/` (`$STATE`). Each session has
 
 `STATUS` drives restart behaviour. A container shutdown kills sessions before the wrapper can mark them, so it stays `running` and the next boot resumes the session through `resume-session --all-running`. Claude exiting with code 0 sets `finished` and any other code sets `failed`. Neither is resumed on boot, but `resume-session <name>` restarts a `failed` one. `session-wrapper` and `start-launcher` resume only when a transcript `$HOME/.claude/projects/*/$SID.jsonl` exists.
 
+`prune_sessions` in `lib/lib.sh` deletes `finished` or `failed` entries whose file has not been modified for `PRUNE_DAYS` (30) days. The entrypoint loop calls it every 30 seconds. It relies on the entry file's mtime, so anything that rewrites an entry (only `reg_save` should) restarts the clock. `remove-session` deletes one entry by hand.
+
 ### Layout and conventions
 
 - Scripts in `bin/` are copied to `/opt/launcher/bin` and put on `PATH`. They source `/opt/launcher/lib/lib.sh`, which sets `set -euo pipefail` and defines `die`, `tm`, `is_live`, the registry helpers and `start_session`.

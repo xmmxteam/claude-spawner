@@ -35,6 +35,21 @@ reg_save() {
   mv "$f.tmp" "$f"
 }
 
+# Delete the entries of sessions that finished or failed and were last changed more than
+# PRUNE_DAYS ago. Running sessions are never touched. The entrypoint calls this every 30 seconds.
+PRUNE_DAYS=30
+prune_sessions() {
+  local f n
+  while IFS= read -r -d '' f; do
+    n=$(basename "$f" .env)
+    valid_name "$n" || continue
+    if ( reg_load "$n"; [[ $STATUS == finished || $STATUS == failed ]] ) && ! is_live "$n"; then
+      rm -f "$f"
+    fi
+  done < <(find "$SESSIONS" -maxdepth 1 -name '*.env' -mmin +$((PRUNE_DAYS * 24 * 60)) -print0)
+  return 0
+}
+
 # Start (or restart) the tmux session for a registered entry.
 start_session() {
   local cmd
