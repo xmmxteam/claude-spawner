@@ -23,15 +23,19 @@ Re-login after expiry uses the same ttyd page. Do not expose port 7681 beyond lo
 | `launch-session <project> [--name N] [--mode default\|bypass] [--worktree] [--docker-host dind\|default]` | Start a session. Default mode is bypass. Names must start with a letter or digit, and `launcher` and `workspace` are reserved. |
 | `list-sessions`, `stop-session <name>`, `resume-session <name>\|--all-running` | Manage sessions. `resume-session` also restarts a `failed` one. |
 | `find-project <words...>` | Find repos under `/workspace` by words in the path. |
-| `launcher-version` | Print the claude-spawner version and the versions of the installed tools. |
+| `spawner-version` | Print the claude-spawner version and the versions of the installed tools. |
 | `clone-repo <owner/repo\|https URL> [dest]` | Clone into `/workspace/<dest>` (default `<owner>/<repo>`), allowed hosts only. `dest` may not contain hidden components such as `.claude`. |
 | `session-wrapper`, `start-launcher`, `start-workspace`, `trust-dir`, `entrypoint` | Internal. `trust-dir` pre-accepts Claude's trust dialog for a directory. |
+
+## Slash commands
+
+The launcher session (and no other session) loads the `spawner` plugin from `config/spawner` with `--plugin-dir` in `bin/start-launcher`. It has one user-only skill per script: `/spawner:launch`, `/spawner:list`, `/spawner:stop`, `/spawner:resume`, `/spawner:find`, `/spawner:clone` and `/spawner:version`. Each passes its arguments to the matching script, for example `/spawner:launch home-ops --mode default`.
 
 ## Versioning
 
 Every push to `main` that CI builds publishes `ghcr.io/xmmxteam/claude-spawner` with the tags `YYYY.MM.DD.N`, `sha-<short commit>` and `latest`. `N` is the workflow run number, so versions sort in build order. The version, commit and build time are image labels and the env vars `SPAWNER_VERSION`, `SPAWNER_COMMIT` and `SPAWNER_BUILT`. Local builds report `dev`.
 
-The build also saves the stamp and the tool versions to `/opt/launcher/version.txt`, and fails if a tool is missing. `bin/start-launcher` adds that file to the launcher's system prompt, so the launcher can report its version without running a command. A resumed Claude session ignores a new system prompt, so the launcher starts a new conversation whenever the image version changes instead of resuming. `launcher-version` prints the same report with the versions installed now, which can differ for Rust because the `claude` user can update toolchains.
+The build also saves the stamp and the tool versions to `/opt/launcher/version.txt`, and fails if a tool is missing. `bin/start-launcher` adds that file to the launcher's system prompt, so the launcher can report its version without running a command. A resumed Claude session ignores a new system prompt, so the launcher starts a new conversation whenever the image version changes instead of resuming. `spawner-version` prints the same report with the versions installed now, which can differ for Rust because the `claude` user can update toolchains.
 
 ## Docker
 

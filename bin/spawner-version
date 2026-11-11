@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# launcher-version
+# spawner-version
 # Prints the claude-spawner build stamp (set as SPAWNER_* env vars by the Dockerfile) and the
 # versions of the tools installed now. The image build saves this output to
 # /opt/launcher/version.txt, which start-launcher adds to the launcher's system prompt.

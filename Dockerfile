@@ -160,7 +160,7 @@ LABEL org.opencontainers.image.version=$VERSION \
       org.opencontainers.image.created=$BUILD_DATE
 RUN set -eux; \
     export HOME=$(mktemp -d) AZURE_CORE_COLLECT_TELEMETRY=false; \
-    launcher-version | tee /opt/launcher/version.txt; \
+    spawner-version | tee /opt/launcher/version.txt; \
     rm -rf "$HOME" || true; \
     chmod 644 /opt/launcher/version.txt; \
     if grep -q unavailable /opt/launcher/version.txt; then echo "a tool is missing" >&2; exit 1; fi
