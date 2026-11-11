@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# launcher-version
+# Prints the claude-spawner build stamp (set as SPAWNER_* env vars by the Dockerfile) and the
+# versions of the tools installed now. The image build saves this output to
+# /opt/launcher/version.txt, which start-launcher adds to the launcher's system prompt.
+# It does not source lib.sh, which would create ~/.launcher during the image build.
+set -uo pipefail
+
+version_re='[0-9]+(\.[0-9]+)+'
+
+# tool <name> <command...>: prints the first version-like token in the command's output.
+tool() {
+  local name=$1 out; shift
+  if out=$("$@" 2>&1) && [[ $out =~ $version_re ]]; then
+    printf '  %-11s %s\n' "$name" "${BASH_REMATCH[0]}"
+  else
+    printf '  %-11s %s\n' "$name" unavailable
+  fi
+}
+
+echo "claude-spawner ${SPAWNER_VERSION:-dev}"
+echo "commit: ${SPAWNER_COMMIT:-unknown}"
+echo "built: ${SPAWNER_BUILT:-unknown}"
+echo
+echo "tools:"
+tool claude claude --version
+tool codex codex --version
+tool node node --version
+tool typescript tsc --version
+tool go go version
+tool rust rustc --version
+tool python python3 --version
+tool git git --version
+tool gh gh --version
+tool docker docker --version
+tool compose docker compose version
+tool kubectl kubectl version --client
+tool helm helm version
+tool talosctl talosctl version --client
+tool flux flux --version
+tool vault vault --version
+tool az az version
+
+sdks=()
+while read -r sdk _; do sdks+=("$sdk"); done < <(dotnet --list-sdks 2>/dev/null)
+printf '  %-11s %s\n' dotnet-sdks "$(IFS=,; echo "${sdks[*]:-unavailable}")"

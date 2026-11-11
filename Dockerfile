@@ -146,6 +146,24 @@ COPY lib/ /opt/launcher/lib/
 COPY config/ /opt/launcher/config/
 RUN chmod -R u=rwX,go=rX /opt/launcher && chmod 755 /opt/launcher/bin/*
 
+# Build stamp. The ARGs sit here so a new version rebuilds only this layer. Tools are run under a
+# throwaway HOME so they leave nothing behind, and the build fails if any tool is missing.
+ARG VERSION=dev
+ARG GIT_SHA=unknown
+ARG BUILD_DATE=unknown
+ENV SPAWNER_VERSION=$VERSION \
+    SPAWNER_COMMIT=$GIT_SHA \
+    SPAWNER_BUILT=$BUILD_DATE
+LABEL org.opencontainers.image.version=$VERSION \
+      org.opencontainers.image.revision=$GIT_SHA \
+      org.opencontainers.image.created=$BUILD_DATE
+RUN set -eux; \
+    export HOME=$(mktemp -d); \
+    launcher-version | tee /opt/launcher/version.txt; \
+    rm -rf "$HOME"; \
+    chmod 644 /opt/launcher/version.txt; \
+    if grep -q unavailable /opt/launcher/version.txt; then echo "a tool is missing" >&2; exit 1; fi
+
 USER claude
 WORKDIR /workspace
 ENV WORKSPACE=/workspace

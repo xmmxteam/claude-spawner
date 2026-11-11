@@ -38,7 +38,7 @@ claude "${args[@]}" --remote-control "Claude Spawner" \
   --tools Bash \
   --settings /opt/launcher/config/launcher-settings.json \
   --strict-mcp-config \
-  --append-system-prompt "$(cat /opt/launcher/config/launcher-prompt.md)"
+  --append-system-prompt "$(cat /opt/launcher/config/launcher-prompt.md /opt/launcher/version.txt)"
 set -e
 
 if (( shutting )); then

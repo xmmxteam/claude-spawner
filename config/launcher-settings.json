@@ -8,6 +8,7 @@
       "Bash(resume-session:*)",
       "Bash(find-project:*)",
       "Bash(clone-repo:*)",
+      "Bash(launcher-version:*)",
       "Bash(gh repo list:*)",
       "Bash(gh org list:*)"
     ]

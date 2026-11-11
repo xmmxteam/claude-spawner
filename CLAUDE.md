@@ -11,7 +11,7 @@ A Docker image plus compose stack that runs headless Claude Code, controlled fro
 - Run the stack: `cp .env.example .env`, fill it in, then `docker compose up -d --build`. The ttyd terminal is at `http://localhost:7681`, where you run `claude` and `/login` once.
 - Build only: `docker build -t claude-spawner:local .`. Downloaded tools (kubectl, Go, Node and so on) resolve to "latest" at build time and stay cached until you use `--no-cache` or change the matching `--build-arg`.
 - Scripts under `bin/` are bash. Check them with `bash -n` and `shellcheck` if it is installed.
-- CI (`.github/workflows/image.yaml`) builds and pushes `ghcr.io/xmmxteam/claude-spawner` on every push to `main` that changes a non-markdown file.
+- CI (`.github/workflows/image.yaml`) builds and pushes `ghcr.io/xmmxteam/claude-spawner` on every push to `main` that changes a non-markdown file. It tags the image `YYYY.MM.DD.N` (N is the run number), `sha-<short commit>` and `latest`, and passes `VERSION`, `GIT_SHA` and `BUILD_DATE` as build args. The final Dockerfile layer turns them into labels, `SPAWNER_*` env vars and `/opt/launcher/version.txt` (the output of `bin/launcher-version`), which `bin/start-launcher` appends to the launcher's system prompt. If you add a tool to the image, add it to `bin/launcher-version`.
 
 ## Architecture
 
