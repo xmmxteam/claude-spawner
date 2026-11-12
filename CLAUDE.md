@@ -26,7 +26,7 @@ All tmux sessions use the dedicated socket `tmux -L launcher`, through the `tm` 
 
 ### Session registry
 
-State lives on the home volume under `~/.launcher/` (`$STATE`). Each session has a shell-quoted var file at `sessions/<name>.env`, written by `reg_save` and read by `reg_load` in `lib/lib.sh`. The fields are `NAME DIR SID MODE WORKTREE DOCKER_HOST_ARG STATUS STARTED_ONCE`. If you add a field, add it to the `reg_save` loop and to `launch-session`. `DOCKER_HOST_ARG` holds the literal `dind` or `default` (or empty), and `start_session` resolves it on every start.
+State lives on the home volume under `~/.launcher/` (`$STATE`). Each session has a shell-quoted var file at `sessions/<name>.env`, written by `reg_save` and read by `reg_load` in `lib/lib.sh`. The fields are `NAME DIR SID MODE WORKTREE DOCKER_HOST_ARG STATUS STARTED_ONCE CREATED`. `CREATED` is a date set by `launch-session`, and older entries lack it. If you add a field, add it to the `reg_save` loop and to `launch-session`. `DOCKER_HOST_ARG` holds the literal `dind` or `default` (or empty), and `start_session` resolves it on every start.
 
 `STATUS` drives restart behaviour. A container shutdown kills sessions before the wrapper can mark them, so it stays `running` and the next boot resumes the session through `resume-session --all-running`. Claude exiting with code 0 sets `finished` and any other code sets `failed`. Neither is resumed on boot, but `resume-session <name>` restarts a `failed` one. `session-wrapper` and `start-launcher` resume only when a transcript `$HOME/.claude/projects/*/$SID.jsonl` exists.
 

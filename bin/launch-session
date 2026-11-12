@@ -29,7 +29,7 @@ if [[ -f $(reg_file "$name") ]]; then
   ( reg_load "$name"; [[ $STATUS != running ]] ) || die "session '$name' is registered as running; use resume-session"
 fi
 
-NAME=$name DIR=$dir MODE=$mode DOCKER_HOST_ARG=$dh STATUS=running STARTED_ONCE=0
+NAME=$name DIR=$dir MODE=$mode DOCKER_HOST_ARG=$dh STATUS=running STARTED_ONCE=0 CREATED=$(date +%F)
 WORKTREE=; [[ -n $worktree ]] && WORKTREE=$name
 SID=$(cat /proc/sys/kernel/random/uuid)
 reg_save

@@ -3,12 +3,12 @@
 source /opt/launcher/lib/lib.sh
 
 shopt -s nullglob
-printf '%-24s %-9s %-5s %-8s %s\n' NAME STATUS LIVE MODE DIR
+printf '%-24s %-9s %-5s %-8s %-10s %-10s %s\n' NAME STATUS LIVE MODE CREATED UPDATED DIR
 for f in "$SESSIONS"/*.env; do
   n=$(basename "$f" .env)
   (
     reg_load "$n"
     live=no; is_live "$n" && live=yes
-    printf '%-24s %-9s %-5s %-8s %s\n' "$NAME" "$STATUS" "$live" "$MODE" "${DIR#"$WORKSPACE"/}"
+    printf '%-24s %-9s %-5s %-8s %-10s %-10s %s\n' "$NAME" "$STATUS" "$live" "$MODE" "${CREATED:--}" "$(date -r "$f" +%F)" "${DIR#"$WORKSPACE"/}"
   )
 done

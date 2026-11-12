@@ -18,7 +18,7 @@ is_live() { tm has-session -t "=$1" 2>/dev/null; }
 valid_name() { [[ $1 =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ && $1 != launcher && $1 != workspace ]]; }
 reg_file() { echo "$SESSIONS/$1.env"; }
 
-# Registry entries are shell-quoted var files: NAME DIR SID MODE WORKTREE DOCKER_HOST_ARG STATUS STARTED_ONCE
+# Registry entries are shell-quoted var files: NAME DIR SID MODE WORKTREE DOCKER_HOST_ARG STATUS STARTED_ONCE CREATED
 reg_load() {
   valid_name "$1" || die "invalid session name: $1"
   local f; f=$(reg_file "$1")
@@ -29,7 +29,7 @@ reg_load() {
 
 reg_save() {
   local f v; f=$(reg_file "$NAME")
-  { for v in NAME DIR SID MODE WORKTREE DOCKER_HOST_ARG STATUS STARTED_ONCE; do
+  { for v in NAME DIR SID MODE WORKTREE DOCKER_HOST_ARG STATUS STARTED_ONCE CREATED; do
       printf '%s=%q\n' "$v" "${!v-}"
     done; } > "$f.tmp"
   mv "$f.tmp" "$f"
