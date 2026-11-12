@@ -61,7 +61,7 @@ RUN set -eux; \
     curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable -c clippy -c rustfmt --no-modify-path
 
 FROM fetch AS dotnet
-ARG DOTNET_CHANNELS="8.0 9.0 10.0"
+ARG DOTNET_CHANNELS="8.0 9.0 10.0 11.0"
 RUN set -eux; \
     curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh; \
     for channel in $DOTNET_CHANNELS; do \
